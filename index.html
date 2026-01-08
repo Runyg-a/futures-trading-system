@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能期货交易分析系统</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 引入Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- 自定义Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        up: '#F53F3F',
+                        down: '#00B42A',
+                        neutral: '#86909C',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-gray-800">智能期货交易分析系统</h1>
+            </div>
+            <nav class="hidden md:flex gap-6">
+                <a href="#dashboard" class="text-primary font-medium">行情面板</a>
+                <a href="#analysis" class="text-gray-600 hover:text-primary">交易分析</a>
+                <a href="#upload" class="text-gray-600 hover:text-primary">自定义数据</a>
+                <a href="#learning" class="text-gray-600 hover:text-primary">学习中心</a>
+            </nav>
+            <button class="md:hidden text-gray-600" id="menuBtn">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white shadow-md px-4 py-2">
+            <nav class="flex flex-col gap-3">
+                <a href="#dashboard" class="text-primary font-medium py-2">行情面板</a>
+                <a href="#analysis" class="text-gray-600 hover:text-primary py-2">交易分析</a>
+                <a href="#upload" class="text-gray-600 hover:text-primary py-2">自定义数据</a>
+                <a href="#learning" class="text-gray-600 hover:text-primary py-2">学习中心</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 1. 行情面板 -->
+        <section id="dashboard" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-tv text-primary"></i>行情面板
+            </h2>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <!-- 合约选择 -->
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <div class="flex items-center gap-2">
+                        <label class="text-gray-700">选择合约：</label>
+                        <select id="contractSelect" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            <option value="rb2405">螺纹钢2405 (rb2405)</option>
+                            <option value="cu2405">沪铜2405 (cu2405)</option>
+                            <option value="ag2406">白银2406 (ag2406)</option>
+                            <option value="bu2406">沥青2406 (bu2406)</option>
+                        </select>
+                    </div>
+                    <button id="refreshBtn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition">
+                        <i class="fa-solid fa-refresh mr-1"></i>刷新行情
+                    </button>
+                </div>
+
+                <!-- K线图表 -->
+                <div class="h-[500px]">
+                    <canvas id="klineChart"></canvas>
+                </div>
+
+                <!-- 实时交易信号 -->
+                <div class="mt-6 p-4 border rounded-lg bg-gray-50">
+                    <h3 class="font-semibold text-lg mb-2">实时交易机会</h3>
+                    <div id="tradeSignal" class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-notch fa-spin text-primary"></i>
+                        <span>正在分析行情...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 交易分析 -->
+        <section id="analysis" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-magnifying-glass-chart text-primary"></i>交易分析
+            </h2>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 技术指标分析 -->
+                    <div>
+                        <h3 class="font-semibold text-lg mb-4">技术指标分析</h3>
+                        <div id="techAnalysis" class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span>均线交叉 (MA5/MA20)</span>
+                                <span id="maSignal" class="px-2 py-1 rounded bg-gray-100">分析中</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>MACD 指标</span>
+                                <span id="macdSignal" class="px-2 py-1 rounded bg-gray-100">分析中</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>RSI 指标 (14)</span>
+                                <span id="rsiSignal" class="px-2 py-1 rounded bg-gray-100">分析中</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>布林带</span>
+                                <span id="bollSignal" class="px-2 py-1 rounded bg-gray-100">分析中</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 交易建议 -->
+                    <div>
+                        <h3 class="font-semibold text-lg mb-4">综合交易建议</h3>
+                        <div id="tradeAdvice" class="p-4 border rounded-lg bg-gray-50 min-h-[180px]">
+                            <p class="text-gray-600">请先选择合约并刷新行情，系统将基于技术指标给出买入/卖出/观望建议。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 自定义数据上传 -->
+        <section id="upload" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-upload text-primary"></i>自定义数据
+            </h2>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="space-y-6">
+                    <!-- 合约代码输入 -->
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-medium">自定义合约代码</label>
+                        <input type="text" id="customContract" placeholder="例如：rb2405、cu2405" 
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    </div>
+
+                    <!-- K线数据上传 -->
+                    <div>
+                        <label class="block text-gray-700 mb-2 font-medium">上传K线数据 (CSV格式)</label>
+                        <input type="file" id="klineFile" accept=".csv" 
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <p class="text-sm text-gray-500 mt-1">CSV格式要求：时间,开盘价,最高价,最低价,收盘价,成交量</p>
+                    </div>
+
+                    <button id="uploadBtn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition">
+                        <i class="fa-solid fa-check mr-1"></i>提交分析
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 学习中心 -->
+        <section id="learning" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-book-open text-primary"></i>学习中心
+            </h2>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <!-- 学习分类标签 -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button class="learn-tab active px-4 py-2 rounded-md bg-primary text-white" data-tab="basic">基础概念</button>
+                    <button class="learn-tab px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300" data-tab="indicator">技术指标</button>
+                    <button class="learn-tab px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300" data-tab="strategy">交易策略</button>
+                </div>
+
+                <!-- 学习内容面板 -->
+                <div class="learn-content" id="basicContent">
+                    <h3 class="font-semibold text-lg mb-3">期货基础概念</h3>
+                    <div class="space-y-4 text-gray-700">
+                        <div>
+                            <h4 class="font-medium text-primary">1. 期货合约</h4>
+                            <p>期货合约是由交易所统一制定的、规定在将来某一特定的时间和地点交割一定数量标的物的标准化合约。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary">2. 保证金</h4>
+                            <p>保证金是期货交易者按规定标准交纳的资金，用于结算和保证履约，通常为合约价值的5%-15%。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary">3. 做多/做空</h4>
+                            <p>做多：预期价格上涨，买入期货合约待涨后卖出；做空：预期价格下跌，卖出期货合约待跌后买回。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-content hidden" id="indicatorContent">
+                    <h3 class="font-semibold text-lg mb-3">常用技术指标</h3>
+                    <div class="space-y-4 text-gray-700">
+                        <div>
+                            <h4 class="font-medium text-primary">1. 移动平均线 (MA)</h4>
+                            <p>MA5代表5日平均线，MA20代表20日平均线。当短期均线上穿长期均线为金叉（买入信号），下穿为死叉（卖出信号）。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary">2. MACD指标</h4>
+                            <p>由快线DIF、慢线DEA和柱状图组成，DIF上穿DEA为金叉，下穿为死叉，用于判断趋势和背离。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary">3. RSI指标</h4>
+                            <p>相对强弱指数，取值0-100，通常70以上为超买（卖出信号），30以下为超卖（买入信号）。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-content hidden" id="strategyContent">
+                    <h3 class="font-semibold text-lg mb-3">经典交易策略</h3>
+                    <div class="space-y-4 text-gray-700">
+                        <div>
+                            <h4 class="font-medium text-primary">1. 均线交叉策略</h4>
+                            <p>当MA5上穿MA20时开多单，MA5下穿MA20时平仓多单/开空单，适合趋势行情。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary">2. 布林带突破策略</h4>
+                            <p>价格突破布林上轨开多单，跌破布林下轨开空单，回归中轨时平仓，适合震荡行情。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary">3. 止损止盈策略</h4>
+                            <p>开仓后设置固定止损（如2%）和止盈（如5%），严格执行纪律，控制风险。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 学习进度记录 -->
+                <div class="mt-8 p-4 border rounded-lg bg-gray-50">
+                    <h3 class="font-semibold mb-2">学习进度</h3>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="learnProgress" class="bg-primary h-2.5 rounded-full" style="width: 33%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">已完成：基础概念 (33%) | 剩余：技术指标、交易策略</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>智能期货交易分析系统 © 2026 | 仅用于学习参考，不构成投资建议</p>
+            <p class="text-sm mt-2">风险提示：期货交易存在高风险，投资需谨慎</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. 移动端菜单切换
+        document.getElementById('menuBtn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 2. 模拟K线数据生成函数
+        function generateKlineData(contract, days = 60) {
+            const basePrice = {
+                'rb2405': 3800,
+                'cu2405': 72000,
+                'ag2406': 5800,
+                'bu2406': 3500
+            }[contract] || 3800;
+            
+            const data = [];
+            let lastPrice = basePrice;
+            
+            for (let i = days; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                
+                // 模拟价格波动
+                const change = (Math.random() - 0.5) * 2 * basePrice * 0.02;
+                const open = lastPrice + (Math.random() - 0.5) * basePrice * 0.01;
+                const high = Math.max(open, open + Math.random() * basePrice * 0.02);
+                const low = Math.min(open, open - Math.random() * basePrice * 0.02);
+                const close = open + change;
+                lastPrice = close;
+                
+                data.push({
+                    t: date.getTime(),
+                    o: open.toFixed(2),
+                    h: high.toFixed(2),
+                    l: low.toFixed(2),
+                    c: close.toFixed(2),
+                    v: Math.floor(Math.random() * 10000 + 5000)
+                });
+            }
+            return data;
+        }
+
+        // 3. K线图表初始化
+        let klineChart;
+        function initKlineChart(contract) {
+            const ctx = document.getElementById('klineChart').getContext('2d');
+            const klineData = generateKlineData(contract);
+            
+            // 销毁原有图表
+            if (klineChart) klineChart.destroy();
+            
+            // 准备图表数据
+            const labels = klineData.map(item => new Date(item.t).toLocaleDateString());
+            const openPrices = klineData.map(item => parseFloat(item.o));
+            const highPrices = klineData.map(item => parseFloat(item.h));
+            const lowPrices = klineData.map(item => parseFloat(item.l));
+            const closePrices = klineData.map(item => parseFloat(item.c));
+            
+            // 创建K线图表 (使用OHLC格式)
+            klineChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        // 主K线
+                        {
+                            label: '收盘价',
+                            data: closePrices,
+                            borderColor: '#165DFF',
+                            backgroundColor: '#165DFF20',
+                            yAxisID: 'y',
+                        },
+                        // 最高价最低价范围
+                        {
+                            label: '价格区间',
+                            type: 'line',
+                            data: highPrices.map((h, i) => ({x: i, y: [lowPrices[i], h]})),
+                            borderColor: '#86909C',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            yAxisID: 'y',
+                            fill: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxRotation: 0 }
+                        },
+                        y: {
+                            position: 'right',
+                            grid: { color: '#E5E7EB' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    return [
+                                        `开盘: ${openPrices[index]}`,
+                                        `最高: ${highPrices[index]}`,
+                                        `最低: ${lowPrices[index]}`,
+                                        `收盘: ${closePrices[index]}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 分析交易信号
+            analyzeTradeSignal(klineData, contract);
+        }
+
+        // 4. 交易信号分析函数
+        function analyzeTradeSignal(klineData, contract) {
+            const closePrices = klineData.map(item => parseFloat(item.c));
+            const lastPrice = closePrices[closePrices.length - 1];
+            
+            // 计算MA5和MA20
+            const ma5 = calculateMA(closePrices, 5);
+            const ma20 = calculateMA(closePrices, 20);
+            const maLast5 = ma5[ma5.length - 1];
+            const maLast20 = ma20[ma20.length - 1];
+            
+            // 计算MACD
+            const macd = calculateMACD(closePrices);
+            const macdLast = macd.macd[macd.macd.length - 1];
+            const signalLast = macd.signal[macd.signal.length - 1];
+            
+            // 计算RSI
+            const rsi = calculateRSI(closePrices, 14);
+            const rsiLast = rsi[rsi.length - 1];
+            
+            // 计算布林带
+            const boll = calculateBollingerBands(closePrices, 20);
+            const bollUpperLast = boll.upper[boll.upper.length - 1];
+            const bollLowerLast = boll.lower[boll.lower.length - 1];
+            
+            // 更新指标显示
+            document.getElementById('maSignal').textContent = maLast5 > maLast20 ? '金叉 (买入)' : '死叉 (卖出)';
+            document.getElementById('maSignal').className = maLast5 > maLast20 ? 'px-2 py-1 rounded bg-down/10 text-down' : 'px-2 py-1 rounded bg-up/10 text-up';
+            
+            document.getElementById('macdSignal').textContent = macdLast > signalLast ? '金叉 (买入)' : '死叉 (卖出)';
+            document.getElementById('macdSignal').className = macdLast > signalLast ? 'px-2 py-1 rounded bg-down/10 text-down' : 'px-2 py-1 rounded bg-up/10 text-up';
+            
+            document.getElementById('rsiSignal').textContent = 
+                rsiLast > 70 ? '超买 (卖出)' : 
+                rsiLast < 30 ? '超卖 (买入)' : '中性 (观望)';
+            document.getElementById('rsiSignal').className = 
+                rsiLast > 70 ? 'px-2 py-1 rounded bg-up/10 text-up' :
+                rsiLast < 30 ? 'px-2 py-1 rounded bg-down/10 text-down' :
+                'px-2 py-1 rounded bg-gray-100 text-gray-600';
+            
+            document.getElementById('bollSignal').textContent = 
+                lastPrice > bollUpperLast ? '突破上轨 (卖出)' :
+                lastPrice < bollLowerLast ? '跌破下轨 (买入)' : '中轨附近 (观望)';
+            document.getElementById('bollSignal').className = 
+                lastPrice > bollUpperLast ? 'px-2 py-1 rounded bg-up/10 text-up' :
+                lastPrice < bollLowerLast ? 'px-2 py-1 rounded bg-down/10 text-down' :
+                'px-2 py-1 rounded bg-gray-100 text-gray-600';
+            
+            // 生成综合交易建议
+            let buyScore = 0, sellScore = 0;
+            if (maLast5 > maLast20) buyScore++; else sellScore++;
+            if (macdLast > signalLast) buyScore++; else sellScore++;
+            if (rsiLast < 30) buyScore++; else if (rsiLast > 70) sellScore++;
+            if (lastPrice < bollLowerLast) buyScore++; else if (lastPrice > bollUpperLast) sellScore++;
+            
+            let advice, adviceClass;
+            if (buyScore >= 3) {
+                advice = `【${contract}】综合信号：强烈买入\n理由：${buyScore}个指标发出买入信号，当前价格${lastPrice}，建议开多单，止损设置为${(lastPrice * 0.98).toFixed(2)}。`;
+                adviceClass = 'text-down';
+            } else if (sellScore >= 3) {
+                advice = `【${contract}】综合信号：强烈卖出\n理由：${sellScore}个指标发出卖出信号，当前价格${lastPrice}，建议开空单，止损设置为${(lastPrice * 1.02).toFixed(2)}。`;
+                adviceClass = 'text-up';
+            } else {
+                advice = `【${contract}】综合信号：观望\n理由：买入信号${buyScore}个，卖出信号${sellScore}个，指标信号不一致，建议等待明确信号后再操作。`;
+                adviceClass = 'text-neutral';
+            }
+            
+            document.getElementById('tradeSignal').innerHTML = `<i class="fa-solid fa-lightbulb text-primary"></i> <span>${advice.split('\n')[0]}</span>`;
+            document.getElementById('tradeAdvice').innerHTML = `<p class="${adviceClass} whitespace-pre-line">${advice}</p>`;
+        }
+
+        // 5. 技术指标计算工具函数
+        // 计算移动平均线
+        function calculateMA(prices, period) {
+            const ma = [];
+            for (let i = 0; i < prices.length; i++) {
+                if (i < period - 1) {
+                    ma.push(null);
+                    continue;
+                }
+                const sum = prices.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+                ma.push(sum / period);
+            }
+            return ma;
+        }
+
+        // 计算MACD
+        function calculateMACD(prices, fast = 12, slow = 26, signal = 9) {
+            const emaFast = calculateEMA(prices, fast);
+            const emaSlow = calculateEMA(prices, slow);
+            const macd = [];
+            const signalLine = [];
+            const histogram = [];
+            
+            for (let i = 0; i < prices.length; i++) {
+                if (!emaFast[i] || !emaSlow[i]) {
+                    macd.push(null);
+                    continue;
+                }
+                macd.push(emaFast[i] - emaSlow[i]);
+            }
+            
+            for (let i = 0; i < macd.length; i++) {
+                if (i < signal - 1 || !macd[i]) {
+                    signalLine.push(null);
+                    histogram.push(null);
+                    continue;
+                }
+                const sum = macd.slice(i - signal + 1, i + 1).reduce((a, b) => a || 0 + b || 0, 0);
+                signalLine.push(sum / signal);
+                histogram.push(macd[i] - signalLine[i]);
+            }
+            
+            return { macd, signal: signalLine, histogram };
+        }
+
+        // 计算EMA
+        function calculateEMA(prices, period) {
+            const ema = [];
+            const multiplier = 2 / (period + 1);
+            for (let i = 0; i < prices.length; i++) {
+                if (i < period - 1) {
+                    ema.push(null);
+                    continue;
+                }
+                if (i === period - 1) {
+                    const sum = prices.slice(0, period).reduce((a, b) => a + b, 0);
+                    ema.push(sum / period);
+                    continue;
+                }
+                ema.push((prices[i] - ema[i - 1]) * multiplier + ema[i - 1]);
+            }
+            return ema;
+        }
+
+        // 计算RSI
+        function calculateRSI(prices, period = 14) {
+            const rsi = [];
+            let gains = 0, losses = 0;
+            
+            for (let i = 0; i < prices.length; i++) {
+                if (i === 0) {
+                    rsi.push(null);
+                    continue;
+                }
+                const change = prices[i] - prices[i - 1];
+                
+                if (i <= period) {
+                    gains += Math.max(change, 0);
+                    losses += Math.max(-change, 0);
+                    
+                    if (i === period) {
+                        const avgGain = gains / period;
+                        const avgLoss = losses / period;
+                        const rs = avgGain / avgLoss;
+                        rsi.push(100 - (100 / (1 + rs)));
+                    } else {
+                        rsi.push(null);
+                    }
+                } else {
+                    const avgGain = ((gains - Math.max(prices[i - period] - prices[i - period - 1], 0)) * (period - 1) + Math.max(change, 0)) / period;
+                    const avgLoss = ((losses - Math.max(-(prices[i - period] - prices[i - period - 1]), 0)) * (period - 1) + Math.max(-change, 0)) / period;
+                    const rs = avgGain / avgLoss;
+                    rsi.push(100 - (100 / (1 + rs)));
+                    gains = avgGain * period;
+                    losses = avgLoss * period;
+                }
+            }
+            return rsi;
+        }
+
+        // 计算布林带
+        function calculateBollingerBands(prices, period = 20, stdDev = 2) {
+            const middle = calculateMA(prices, period);
+            const upper = [];
+            const lower = [];
+            
+            for (let i = 0; i < prices.length; i++) {
+                if (i < period - 1) {
+                    upper.push(null);
+                    lower.push(null);
+                    continue;
+                }
+                const slice = prices.slice(i - period + 1, i + 1);
+                const mean = middle[i];
+                const variance = slice.reduce((acc, price) => acc + Math.pow(price - mean, 2), 0) / period;
+                const std = Math.sqrt(variance);
+                
+                upper.push(mean + stdDev * std);
+                lower.push(mean - stdDev * std);
+            }
+            
+            return { middle, upper, lower };
+        }
+
+        // 6. 学习中心标签切换
+        document.querySelectorAll('.learn-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 切换标签样式
+                document.querySelectorAll('.learn-tab').forEach(t => {
+                    t.classList.remove('active', 'bg-primary', 'text-white');
+                    t.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                this.classList.add('active', 'bg-primary', 'text-white');
+                this.classList.remove('bg-gray-200', 'text-gray-700');
+                
+                // 切换内容面板
+                const tabName = this.dataset.tab;
+                document.querySelectorAll('.learn-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`${tabName}Content`).classList.remove('hidden');
+                
+                // 更新学习进度
+                const progress = { 'basic': 33, 'indicator': 66, 'strategy': 100 }[tabName];
+                document.getElementById('learnProgress').style.width = `${progress}%`;
+                const progressText = {
+                    'basic': '已完成：基础概念 (33%) | 剩余：技术指标、交易策略',
+                    'indicator': '已完成：基础概念、技术指标 (66%) | 剩余：交易策略',
+                    'strategy': '已完成：全部内容 (100%) | 恭喜你完成所有学习内容！'
+                }[tabName];
+                document.querySelector('#learning .text-sm').textContent = progressText;
+            });
+        });
+
+        // 7. 事件绑定
+        // 刷新行情按钮
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            const selectedContract = document.getElementById('contractSelect').value;
+            initKlineChart(selectedContract);
+            this.innerHTML = '<i class="fa-solid fa-check mr-1"></i>行情已刷新';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fa-solid fa-refresh mr-1"></i>刷新行情';
+            }, 2000);
+        });
+
+        // 自定义数据提交按钮
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            const customContract = document.getElementById('customContract').value.trim();
+            const klineFile = document.getElementById('klineFile').files[0];
+            
+            if (!customContract && !klineFile) {
+                alert('请输入自定义合约代码或上传K线数据文件！');
+                return;
+            }
+            
+            // 如果有自定义合约代码，优先使用
+            if (customContract) {
+                initKlineChart(customContract);
+                document.getElementById('contractSelect').value = customContract;
+                alert(`已加载自定义合约【${customContract}】的模拟行情数据！`);
+                return;
+            }
+            
+            // 如果有上传文件，解析CSV
+            if (klineFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const lines = content.split('\n').filter(line => line.trim());
+                    const parsedData = [];
+                    
+                    // 跳过表头
+                    for (let i = 1; i < lines.length; i++) {
+                        const [time, open, high, low, close, volume] = lines[i].split(',');
+                        parsedData.push({
+                            t: new Date(time).getTime(),
+                            o: open,
+                            h: high,
+                            l: low,
+                            c: close,
+                            v: volume
+                        });
+                    }
+                    
+                    alert(`已成功解析${parsedData.length}条K线数据！系统将基于该数据进行分析。`);
+                    // 这里可以扩展：使用上传的真实数据替代模拟数据
+                    initKlineChart(customContract || 'custom');
+                };
+                reader.readAsText(klineFile);
+            }
+        });
+
+        // 页面加载时初始化默认合约
+        window.addEventListener('load', function() {
+            initKlineChart(document.getElementById('contractSelect').value);
+        });
+    </script>
+</body>
+</html>
